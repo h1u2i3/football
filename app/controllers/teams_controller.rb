@@ -1,5 +1,6 @@
 class TeamsController < ApplicationController
   before_action :set_team, only: [:show, :edit, :update, :destroy]
+  skip_before_action :verify_authenticity_token, only: [:create]
 
   # GET /teams
   # GET /teams.json
@@ -37,6 +38,29 @@ class TeamsController < ApplicationController
     end
   end
 
+  def schedule
+    @teams = Team.all
+    if @teams.size == 16
+      @schedules = []
+      time_index = 0
+      @teams.each_slice(4) do |slice|
+        times = avail_times[time_index..(time_index + 1) * 6 - 1]
+        new_schedule_teams = []
+        schedule_teams = slice.combination(2).to_a
+        (0..5).each do |i|
+          new_schedule_teams << (schedule_teams[i] << times[i])
+        end
+        @schedules << new_schedule_teams
+        time_index = time_index + 1
+      end
+    else
+      @error = "Sorry, team size is not 16, please make sure the team size is equal to 16"
+    end
+    if @error
+      render json: {error: @error}
+    end
+  end
+
   # PATCH/PUT /teams/1
   # PATCH/PUT /teams/1.json
   def update
@@ -70,5 +94,14 @@ class TeamsController < ApplicationController
     # Never trust parameters from the scary internet, only allow the white list through.
     def team_params
       params.require(:team).permit(:name)
+    end
+
+    def avail_times
+      times = []
+      (0..4).each do |i|
+        times << (Time.current + i.day).change(hour: 21)
+        times << (Time.current + i.day).change(hour: 23)
+      end
+      times
     end
 end
