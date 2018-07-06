@@ -27,7 +27,7 @@ core code:
   end
 ```
 
-1. push with http://localhost:3000/teams
+1. push with http://localhost:3000/teams.json
 
 ```json
 {
